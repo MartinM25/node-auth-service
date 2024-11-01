@@ -2,13 +2,16 @@ require('dotenv').config();
 
 const cors = require('cors');
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use('/api/users', userRoutes);
+
+// Export App
+module.exports = { app };
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
@@ -16,5 +19,4 @@ mongoose.connect(process.env.MONGO_URI)
   console.log('MongoDB connected');
 }).catch(err => console.log(err));
 
-// Export App
-module.exports = app;
+app.use('/api/users', userRoutes);
