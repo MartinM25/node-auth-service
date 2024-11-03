@@ -73,7 +73,7 @@ router.post('/login', async (req, res) => {
 // Profile Retrieval Route
 router.get('/profile', authenticate, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('name email profilePicture role');
+    const user = await User.findById(req.user.user_id).select('name email profilePicture role');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -87,7 +87,7 @@ router.get('/profile', authenticate, async (req, res) => {
 router.put('/profile', authenticate, async (req, res) => {
   try {
     const { name, email, profilePicture } = req.body;
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.user_id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -114,6 +114,22 @@ router.post('/create-chat', async (req, res) => {
         'Content-Type': 'application/json',
       }
     });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
+// Fetch User Chats
+router.get('/get-chats', authenticate, async (req, res) => {
+  try {
+    const response = await axios.get(`${DJANGO_SERVICE_URL}user-chats/`, {
+      headers: {
+        Authorization: req.headers.authorization, // Forward the authorization header
+      },
+    });
+
     res.status(response.status).json(response.data);
   } catch (error) {
     console.error(error);
