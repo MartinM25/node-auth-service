@@ -15,12 +15,12 @@ const userSchema = new mongoose.Schema({
   },
   passwordHash: { 
     type: String, 
-    required: true, 
-    default: '' },
+    required: true,
+  },
   role: { 
-    type: String, 
-    enum: ['agent', 'tenant', 'landlord'],
-    default: 'tenant',
+    type: String,
+    required: true, 
+    enum: ['agent', 'tenant', 'landlord']
   } 
 });
 

@@ -6,24 +6,32 @@ const authenticate = require('../middleware/authenticate');
 
 const router = express.Router();
 
+const DJANGO_SERVICE_URL = 'http://127.0.0.1:8000/api/chats/'
+
 // User Registration Route
 router.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, role } = req.body;
 
   try {
     const existingUser = await User.findOne({ email });
 
     // Check if Email is in the DB
     if (existingUser) return res.status(400).json(
-      { message: 'User Already Exits'}
+      { message: 'User Already Exits' }
     );
 
+    // Validate role
+    const allowedRoles = ['agent', 'tenant', 'landlord'];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = new User ({ name, email, passwordHash });
+    const user = new User({ name, email, passwordHash, role });
     await user.save();
 
     res.status(201).json(
-      { message: 'User Registered Successfully'}
+      { message: 'User Registered Successfully' }
     );
   } catch (err) {
     res.status(400).json(
@@ -39,7 +47,7 @@ router.post('/login', async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json(
-      { message: 'Invalid Credentials' }
+      { message: 'User not found' }
     );
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
@@ -47,8 +55,13 @@ router.post('/login', async (req, res) => {
       { message: 'Invalid Credentials' }
     )
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '1h'
+    const payload = {
+      user_id: user._id, // Make sure this matches with what you expect in Django
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, {
+      expiresIn: '1h',
+      algorithm: 'HS256',
     });
 
     res.json({ token });
@@ -86,10 +99,28 @@ router.put('/profile', authenticate, async (req, res) => {
 
     await user.save();
     res.json({ message: 'Profile updated successfully', user });
-  
+
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
 });
 
+// Create Chat
+router.post('/create-chat', async (req, res) => {
+  try {
+    const response = await axios.post(`${DJANGO_SERVICE_URL}create/`, req.body, {
+      headers: {
+        'Authorization': req.headers.authorization, // Pass along the auth header
+        'Content-Type': 'application/json',
+      }
+    });
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(error.response?.status || 500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
+
+
