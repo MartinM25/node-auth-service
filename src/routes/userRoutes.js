@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
@@ -126,7 +127,7 @@ router.get('/get-chats', authenticate, async (req, res) => {
   try {
     const response = await axios.get(`${DJANGO_SERVICE_URL}user-chats/`, {
       headers: {
-        Authorization: req.headers.authorization, // Forward the authorization header
+        Authorization: req.headers.authorization,
       },
     });
 
