@@ -84,6 +84,22 @@ router.get('/profile', authenticate, async (req, res) => {
   }
 });
 
+// Fetch User by ID
+router.get('/profile/:id', authenticate, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const user = await User.findById(id).select('name email role'); // Fetch only required fields
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Profile Update Route
 router.put('/profile', authenticate, async (req, res) => {
   try {
