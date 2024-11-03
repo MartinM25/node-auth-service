@@ -98,7 +98,38 @@ router.get('/profile/:id', authenticate, async (req, res) => {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
+
+
 });
+
+// Fetch User Based on Role
+router.get('/profiles', authenticate, async (req, res) => {
+  const { role, exclude } = req.query;
+
+  try {
+    let query = {};
+    
+    if (role === 'agent') {
+      query = {
+        $or: [
+          { role: 'agent', _id: { $ne: exclude } },
+          { role: 'landlord' }
+        ]
+      };
+    } else if (role === 'landlord') {
+      query = { role: 'tenant' };
+    } else {
+      return res.status(400).json({ message: 'Invalid role specified.' });
+    }
+
+    const users = await User.find(query).select('name email role profilePicture'); // Adjust fields as necessary
+    return res.json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 
 // Profile Update Route
 router.put('/profile', authenticate, async (req, res) => {
